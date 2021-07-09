@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Tweet Analyzer Projects</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename='bootstrap.min.css') }}">
+    <script src="{{ url_for('static',filename='jquery.min.js') }}"></script>
+
+    <style>
+		input[type=button]{margin:0px 8px;}
+		.btn-default:hover,.btn-active{background:#217452 !important;color:#FFF !important;}
+		.alert{width:100%;text-align:center;display:none;}
+    </style>
+
+  </head>
+  <body>
+    <header style="background:#ABCDEF;margin:0px;padding:2px 0px;">
+      <h2 align="center">Tweet Analyzer</span></h2>
+    </header>
+
+    <div class="container">
+		<div class="row" style="height:420px;margin-top:60px;">
+			<div class='col-sm-10 col-sm-offset-1'>
+				<label class='control-label'>Enter Your Tweet:</label>
+				<textarea class='form-control' id="txt_tweet_text" rows='4' cols='60'></textarea>
+				<br><div style="background: aqua;height:2px;"></div>
+				<div class='row'>
+					<div class='col-sm-8'>
+						<label id='alert_positive' class='alert alert-success'>Positive</label>
+						<label id='alert_negative' class='alert alert-danger'>Negative</label>
+						<label id='alert_neutral' class='alert alert-warning'>Neutral</label>
+						<label id='alert_notfound' class='alert alert-danger'>Unfortunately Your Tweet is unrecognizable, Please Check Random Tweet.</label>
+					</div>
+					<div class='col-sm-4'>
+						<div class="random_tweet_pag hide" align='right' style='padding:8px 0px;'>
+							<a href='javascript:void(0)' class='btn btn-sm btn-default' onclick="fn_load_tweet(this,0)">1</a>
+							<a href='javascript:void(0)' class='btn btn-sm btn-default' onclick="fn_load_tweet(this,1)">2</a>
+							<a href='javascript:void(0)' class='btn btn-sm btn-default' onclick="fn_load_tweet(this,2)">3</a>
+							<a href='javascript:void(0)' class='btn btn-sm btn-default' onclick="fn_load_tweet(this,3)">4</a>
+							<a href='javascript:void(0)' class='btn btn-sm btn-default' onclick="fn_load_tweet(this,4)">5</a>
+						</div>
+					</div>
+				</div>
+				<div class='' align="center" style='margin-top:15px;'>
+					<input type="button" class='btn btn-primary' value="Analyze It" onclick='fn_submit_tweet()'>
+					<input type="button" class='btn btn-success' value="Random Tweet" onclick='fn_random_tweet()'>
+					<input type="button" class='btn btn-warning' value="Reset" onclick="$('.alert').fadeOut(0);$('.random_tweet_pag').addClass('hide');$('#txt_tweet_text').val('').focus();">
+				</div>
+			</div>
+		</div>
+		
+	</div>
+	<br>
+	<div style="background:#333;height:15px;"></div>
+	
+	<div id="loading_modal" class="modal" tabindex="-1" data-backdrop="static" data-keyboard="true">
+		<div class="modal-dialog">
+			<div class="modal-content" style="background:transparent;">
+				<div class="modal-body" style='padding:0px;min-height:280px;padding-top:100px;' align='center'>
+					<img src="{{ url_for('static',filename='loading.gif') }}" style='margin:0px auto;'>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="{{ url_for('static',filename='bootstrap.min.js') }}"></script>
+  </body>
+</html>
+
+
+<script>
+	var textArr=["","","","",""],textValue=["","","","",""];
+	var index=0;
+
+	function fn_load_tweet(o,ind){
+		$('#txt_tweet_text').val(textArr[ind]);
+		$('.btn-active').removeClass('btn-active');
+		$(o).addClass('btn-active');
+		
+		fn_tweet_alert(ind);
+	}
+	function fn_tweet_alert(ind){	
+		$('.alert').fadeOut(0);
+		
+		if(textValue[ind]=="y")
+			$('#alert_positive').fadeIn();
+		else if(textValue[ind]=="n")
+			$('#alert_negative').fadeIn();
+		else if(textValue[ind]=="0")
+			$('#alert_neutral').fadeIn();
+	}
+	$(document).ready(function(){
+		$('#txt_tweet_text').val('').focus();
+	});
+	function fn_submit_tweet(){
+		$('.random_tweet_pag').addClass('hide');
+		$('.alert').fadeOut(0);
+		
+		if($('#txt_tweet_text').val()==""){
+			$('#txt_tweet_text').focus();
+			return;
+		}
+	
+		$('#loading_modal').modal();
+		textArr=["","","","",""];
+
+		$.ajax({
+			url:'/analyze_tweet',
+			data:{'text':$('#txt_tweet_text').val()},
+			type:'post',
+			success:function(r){
+				$('#loading_modal').modal('hide');
+				// console.log(r);
+
+				index=0;
+				var tmp=$.parseJSON(r);
+				for (var i in tmp.text){
+					textArr[index]=tmp.text[i];
+					index++;
+				}
+				index=0;
+				for (var i in tmp.value){
+					textValue[index]=tmp.value[i];
+					index++;
+				}
+				
+				$('#txt_tweet_text').val(textArr[0]);
+				if(textArr[0]!="")	fn_tweet_alert(0);
+				else $('#alert_notfound').fadeIn();
+				
+			},
+			error:function(e){
+				console.log(e);
+			}
+		});
+	}
+	function fn_random_tweet(){
+		$('#loading_modal').modal();
+		$('.random_tweet_pag').addClass('hide');
+		$('.alert').fadeOut(0);
+
+		$.ajax({
+			url:'/random_tweet',
+			type:'post',
+			success:function(r){
+				$('#loading_modal').modal('hide');
+				// console.log(r);
+				$('.random_tweet_pag').removeClass('hide');
+				index=0;
+				var tmp=$.parseJSON(r);
+				for (var i in tmp.text){
+					textArr[index]=tmp.text[i];
+					index++;
+				}
+				index=0;
+				for (var i in tmp.value){
+					textValue[index]=tmp.value[i];
+					index++;
+				}
+				fn_load_tweet($('.random_tweet_pag').find('a').eq(0),0);
+			},
+			error:function(e){
+				console.log(e);
+			}
+		});
+	}
+	
+</script>

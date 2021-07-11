@@ -11,7 +11,6 @@ Plugin and Programming Language Used :<br>
 Language Python 3.9 ;<br>
 Render Engine: Flask ;<br>
 Pandas ;<br>
-Scarrper for Movie poster load from IMDB ;<br>
 Database: Flat File CSV ;<br>
 Google App Engine
 <br><br>
